@@ -1,0 +1,148 @@
+\documentclass[a4paper, 12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage[a4paper, total={6.8in, 8in}]{geometry}
+\usetikzlibrary{positioning}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Martín Romera Sobrado}
+\chead{TLP}
+\lhead{PEC1}
+\cfoot{\thepage}
+
+\setlength{\headheight}{52pt}
+
+\begin{document}
+
+    \begin{titlepage}
+        
+        \centering
+		\vspace*{1cm}
+		
+		\Huge
+		\textbf{Teoría de los Lenguajes de Programación}\\
+		\textbf{PEC1 - 2021}
+		
+		\vspace{0.5cm}
+		\LARGE
+		Centro Asociado de la UNED en Bizkaia\\
+		\vspace{1.5cm}
+		
+		\textbf{Martín Romera Sobrado}\\
+		\textbf{Bilbao}
+		
+		\vfill
+		
+		\vspace{0.8cm}
+		\Large
+		\today
+
+    \end{titlepage}
+
+	\tableofcontents
+	\newpage
+
+	\section{Pregunta 1}
+
+        \textit{Supongamos una implementación de la práctica en un lenguaje no
+        declarativo (como \textbf{Java, Pascal, C}. Comente qué ventahas y qué
+        descentajas tendría frente a la implementación en \textbf{Haskell}. 
+        Relacione estas ventajas desde el punto de vista de la eficiencia con 
+        respecto a la programación y a la ejecución. ¿Cuál sería el principal
+        punto a favor con respecto a la implenetación en los lenguajes no 
+        declarativos? ¿Y el de la implementación en \textbf{Haskell}?)}\\\mbox{}
+
+        La principal diferencia entre ambas implementaciones es que ambas son 
+        más (o menos) eficientes respecto a los aspectos de \textbf{programación},
+        y \textbf{ejecución}. \\\mbox{}
+        
+        La programación declarativa nos ofrece una forma 
+        muy visual y sencilla de programar en general, lo que hace que la 
+        \textbf{programación sea más eficiente}, ya que la forma de definir la 
+        lógica de un problema de este calibre es más cercana a la forma en la 
+        que lo plantearía una persoa mediante el paradigma funcional que nos 
+        ofrece \textit{Haskell}. 
+        Por supuesto esto es relativo al programador, si no está acostumbrado a la programación 
+        declarativa esta eficiencia se acerca a la nulidad. Por otra parte la 
+        arquitecutra de un computador convencional no está preparada para 
+        ejecutar ``programas funcionales'' de forma eficiente, lo que hace que 
+        \textbf{ejecución sea lenta}.\\\mbox{}
+
+        Por otra parte los lenguajes de programación no declarativa 
+        pertenecientes a un paradigma imperativo más fiel a la arquitectura de 
+        un computador convencional nos otorga \textbf{mayor eficiencia en la 
+        ejecución}, sobre todo con lenguajes más cercanos a la maquina como
+        podría ser \textit{C}, a cambio de \textbf{dificultar la programación} 
+        de un problema complejo como puede ser este que se plantea en la 
+        práctica.\\\mbox{}
+
+    \section{Pregunta 2}
+
+        \textit{Indique, con sus palabras, qué permite gestionar el predicado 
+        predefinido no lógico, corte (\texttt{!}), en \textbf{Prolog}. ¿Cómo se realizaría
+        este efecto en \textbf{Java}? Justifique su respuesta.}\\\mbox{}
+
+        El perdicado corte (\texttt{!}) de \textit{Prolog} sirve para controlar el flujo
+        de ejecución de una computación lógica. Este permite regular la 
+        eficiencia de ejecución de un algoritmo o incluso evitar la entrada en 
+        en bucles infinitos. Lo que hace es \textbf{podar todas las ramas del
+        nodo padre del que encuentra el predicado ``\texttt{!}''}. El análogo más cercano
+        en \textit{Java} y otro muchos lenguajes de programación imperativa es 
+        el \texttt{break}. Podríamos estar explorando la ramificación de un nodo
+        en un árbol mediante un bucle \texttt{while} que recorra todos los hijos
+        de ese nodo, y que para comprobar si el nodo que estamos comprobando es 
+        el que queremos seguir explorando podemos poner un condicional 
+        \texttt{if} con una sentencia lógica y a continuación un \texttt{break}
+        para salir del bucle. Esto es el analogo en \textit{Prolog} a introducir
+        una regla (que sería la equivalente a la sentencia lógica del 
+        condicional) seguido de un predicado corte. La sentencia lógica del 
+        condicional también podría ser la que defina un patrón en un predicado 
+        de \textit{Prolog}.\\\mbox{}
+
+    \section{Pregunta 3}
+
+        \textit{Para los tipos de datos del problema definidos en 
+        \textbf{Haskell}, indique qué clases de constructores de tipos se han 
+        utilizado en cada caso (ver capítulo 5 del libro de la asignatura).}
+        \\\mbox{}
+
+        Para
+        \begin{minted}{haskell}
+    type Zone = Int
+        \end{minted}
+        , se define el tipo como un \textbf{sinónimo} de un tipo 
+        \textbf{atómico}, en este caso el tipo \mintinline{Haskell}{Int} de la 
+        propia implementación de \textit{Haskell}.\\\mbox{}
+
+        Para
+        \begin{minted}{Haskell}
+    type Row        = [Zone]
+    type Map        = [Row]
+    type Solution   = [Color]
+        \end{minted}
+        , se definen como \textbf{sinónimos} de tipos \textbf{estructurados} 
+        de clase \textbf{Array}. \\\mbox{}
+
+        Para
+        \begin{minted}{Haskell}
+    type Adjacency = (Zone,[Zone])
+    type Node      = ([Adjacency],Zone,Zone,Solution)
+        \end{minted}
+        , se definen como \textbf{sinónimos} de tipos \textbf{estructurados} 
+        de clase \textbf{Tupla}. \\\mbox{}
+
+        Para 
+        \begin{minted}{Haskell}
+    data Color = Red | Green | Blue | Yellow
+        deriving (Enum, Eq, Show)
+        \end{minted}
+        , se define como un tipo \textbf{enumerado} derivando las propiedades de 
+        algunas clases de la propia implementación de \textit{Haskell}.
+\end{document}
