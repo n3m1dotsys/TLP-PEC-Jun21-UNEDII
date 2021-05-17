@@ -50,27 +50,6 @@ adjacencies (r1:m) = adjAux (r1:m) (adjLeftAux r1 []) -- rmEmp (rmRed (adjAux (r
               | otherwise = z : addAdj2 x zs
             addAdj2 x _ = [x]
         addAdj1 y x _ = [(y,[x])]
-    -- Elimina redundancias en la lista de adyacencias
-    -- rmRed :: [Adjacency] -> [Adjacency]
-    -- rmRed (a:as) = rmRedAux a as : rmRed as
-    --   where
-    --     rmRedAux :: Adjacency -> [Adjacency] -> Adjacency
-    --     rmRedAux (a,as) ((b,bs):adjs)
-    --       | elem a bs && elem b as = rmRedAux (a, delete b as) adjs
-    --       | otherwise              = rmRedAux (a,as) adjs
-    --       where
-    --         delete :: Zone -> [Zone] -> [Zone]
-    --         delete x (a:as)
-    --           | x == a    = delete x as -- Mantener recursividad por consistencia
-    --           | otherwise = a : delete x as
-    --         delete x _ = []
-    --     rmRedAux a _ = a
-    -- rmRed _ = []
-    -- Eliminar las Adjacency sin lista
-    rmEmp :: [Adjacency] -> [Adjacency]
-    rmEmp ((_,[]):adjs) = rmEmp adjs
-    rmEmp ((a,as):adjs) = (a,as) : rmEmp adjs
-    rmEmp _ = []
 
 ---------------------------
 --- SEGUNDA FASE: COLOR ---
@@ -115,7 +94,9 @@ colorList = [toEnum 0::Color ..]
 -- --- Función esSol
 -- --- Comprueba si un nodo es solución o no
 esSol :: Node -> Bool
-esSol (adjs, num, _, sol) = andAux [1..num] sol adjs
+esSol (adjs, num, zone, sol) 
+  | num == zone && zone == length sol = andAux [1..num] sol adjs
+  | otherwise                         = False
   where
     andAux :: [Zone] -> Solution -> [Adjacency] -> Bool
     andAux (z:zs) sol adjs  = null (sameColor z (adjOf adjs z) sol) && andAux zs sol adjs
@@ -124,40 +105,29 @@ esSol (adjs, num, _, sol) = andAux [1..num] sol adjs
 --- Función comp
 --- Calcula las compleciones del nodo actual coloreando la zona actual con los colores utilizables
 comp :: Node -> [Node]
-comp node@(adjs, num, zone, sol) = genNodes node (sameColor zone (adjOf adjs zone) sol)
+comp (adjs, num, zone, sol) -- = genNodes node (sameColor zone (adjOf adjs zone) sol)
+  | num == zone = []
+  | otherwise   = genNodes (adjs, num, zone+1, sol) (possibleColors adjs (zone+1) sol)
   where
-    genNodes :: Node -> [Zone] -> [Node]
-    genNodes node@(adjs, n, z, sol) (zone:zs) -- = genNode (adjs, n, z, sol) zone: genNodes node zs
-      | null (posColors adjs sol zone Red) = genNodes node zs
-      | otherwise                          = genNode (adjs, n, z, sol) zone: genNodes node zs
-      where
-        genNode ::  Node -> Zone -> Node
-        genNode node@(adjs, n, z, sol) zone = (adjs, n, z, chngColor zone sol (takeFirst (posColors adjs sol zone Red)))
-          where
-            takeFirst :: [Color] -> Color
-            takeFirst (c:cs) = c
-            chngColor :: Zone -> Solution -> Color -> Solution
-            chngColor z (s:ss) c
-              | z == 1    = c : ss
-              | otherwise = s : chngColor (z-1) ss c
-            chngColor _ sol _ = sol
-        posColors :: [Adjacency] -> Solution -> Zone -> Color -> [Color]
-        posColors adjs sol z c
-          | nextColor c /= Red && null (sameColorAux c (adjOf adjs z) sol)      = c : posColors adjs sol z (nextColor c)
-          | nextColor c == Red && null (sameColorAux c (adjOf adjs z) sol)      = [c]
-          | nextColor c /= Red && not(null (sameColorAux c (adjOf adjs z) sol)) = posColors adjs sol z (nextColor c)
-          | otherwise                                                           = []
-    genNodes (adjs, num, zone, sol) []
-      | zone < num    = [(adjs,num,zone+1,sol)]
-      | otherwise     = []
+    genNodes :: Node -> [Color] -> [Node]
+    genNodes node@(adjs, num, zone, sol) (c:cs) = (adjs, num, zone, sol ++ [c]) : genNodes node cs
+    genNodes _ _                                = []
 
--- Siguiente color
-nextColor :: Color -> Color
-nextColor c
-  | c == Red    = Green
-  | c == Green  = Blue
-  | c == Blue   = Yellow
-  | otherwise   = Red
+possibleColors :: [Adjacency] -> Zone -> Solution -> [Color]
+possibleColors adjs zone sol = possibleColorsAux adjs zone sol colorList
+  where
+    possibleColorsAux :: [Adjacency] -> Zone -> Solution -> [Color] -> [Color]
+    possibleColorsAux adjs zone sol (c:cs)
+      | canBePainted zone sol (adjOf adjs zone) c   = c:possibleColorsAux adjs zone sol cs
+      | otherwise                                   = possibleColorsAux adjs zone sol cs
+    possibleColorsAux _ _ _ _ = []
+
+canBePainted :: Zone -> Solution -> [Zone] -> Color -> Bool
+canBePainted zone sol (a:as) c
+  | not(painted a sol) = True
+  | colorOf a sol /= c = canBePainted zone sol as c
+  | otherwise          = False
+canBePainted _ _ _ _ = True
 
 -- Zonas adyacentes a zona
 adjOf :: [Adjacency] -> Zone -> [Zone]
@@ -172,8 +142,8 @@ sameColor z zs sol = sameColorAux (colorOf z sol) zs sol
 
 sameColorAux :: Color -> [Zone] -> Solution -> [Zone]
 sameColorAux c (z:zs) sol
-  | colorOf z sol == c  = z : sameColorAux c zs sol
-  | otherwise             = sameColorAux c zs sol
+  | painted z sol && colorOf z sol == c = z : sameColorAux c zs sol
+  | otherwise                           = sameColorAux c zs sol
 sameColorAux _ _ _ = []
 
 -- Color de una zona
@@ -183,10 +153,17 @@ colorOf z (s:ss)
   | otherwise = colorOf (z-1) ss
 colorOf z _   = Red -- Por consistencia, no se debería llegar aquí NUNCA
 
+-- Comprueba si una zona está pintada todavía
+painted :: Zone -> Solution -> Bool
+painted z (s:sol)
+  | z == 1    = True
+  | otherwise = painted (z-1) sol
+painted _ _ = False
+
 --- Función initialNode
 --- Construye el nodo inicial para comenzar el Backtracking
 initialNode :: Map -> Node
-initialNode m = (adjacencies m, numZonas m, firstZona m, firstSolPar (numZonas m))
+initialNode m = (adjacencies m, numZonas m, 0, [])
   where
     -- Devuelve el número de zonas de un mapa
     numZonas :: Map -> Zone
@@ -201,12 +178,3 @@ initialNode m = (adjacencies m, numZonas m, firstZona m, firstSolPar (numZonas m
               | otherwise = numZonasAux2 r x
             numZonasAux2 [] x = x
         numZonasAux1 [] x = x
-    -- Devuelve la primera zona del mapa 
-    firstZona :: Map -> Zone
-    firstZona ((z:zs):rs) = z
-    firstZona _ = 0
-    -- Devuelve la primera solución parcial
-    firstSolPar :: Zone -> Solution
-    firstSolPar x
-      | x == 0    = []
-      | otherwise = Red : firstSolPar (x-1)
